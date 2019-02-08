@@ -142,6 +142,61 @@ class KnowledgeBase(object):
         """
         ####################################################
         # Student code goes here
+        if isinstance(fact_or_rule, Fact):
+            fact = self._get_fact(fact_or_rule)
+            if not fact:
+                return "Fact is not in the KB"
+            return self.explain_helper(fact, "")
+        elif isinstance(fact_or_rule, Rule):
+            rule = self._get_rule(fact_or_rule)
+            if not rule:
+                return "Rule is not in the KB"
+            return self.explain_helper(rule, "")
+        else:
+            return False
+    
+    def explain_helper(self, fact_or_rule, indentLevel):
+        indent = indentLevel
+        explained = indent
+        if isinstance(fact_or_rule, Fact):
+            fact = fact_or_rule
+            explained += "fact: " + str(fact.statement)
+            if fact.asserted:
+                explained += " ASSERTED"
+            if not fact.supported_by:
+                return explained
+            indent += "  "
+            explained += '\n'
+            counter = 0
+            for f, r in fact.supported_by:
+                explained += indent + "SUPPORTED BY\n"
+                explained += self.explain_helper(f, indent + "  ") + "\n"
+                explained += self.explain_helper(r, indent + "  ")
+                if counter != len(fact.supported_by) - 1:
+                    explained += "\n"
+                counter += 1
+        elif isinstance(fact_or_rule, Rule):
+            rule = fact_or_rule
+            explained += "rule: " + "(" + ", ".join([str(statement) for statement in rule.lhs]) + ")"
+            explained += " -> " + str(rule.rhs)
+            if rule.asserted:
+                explained += " ASSERTED"
+            if not rule.supported_by:
+                return explained
+            indent += "  "
+            explained += '\n'
+            counter = 0
+            for f, r in rule.supported_by:
+                explained += indent + "SUPPORTED BY\n"
+                explained += self.explain_helper(f, indent + "  ") + "\n"
+                explained += self.explain_helper(r, indent + "  ")
+                if counter != len(rule.supported_by) - 1:
+                    explained += "\n"
+                counter += 1
+        else:
+            return False
+        return explained
+
 
 
 class InferenceEngine(object):
